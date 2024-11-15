@@ -1,14 +1,20 @@
 from funcs import transcribe as t
+from funcs import helpers as h
+from funcs import caption_create as cc
 
 def main():
-	test_path = "C:/Users/btdug/OneDrive/Documents/Python Scripts/"
+	input_path = "C:/Users/btdug/OneDrive/Documents/Python Scripts/"
+	output_path = "C:/Users/btdug/OneDrive/Documents/Python Scripts/test_output/"
+	image_path = output_path + "caption_imgs/"
 	test_file = "inaworld_pure.mp3"
-	by_word = True
-	transcribed_file = "by_word.csv"
+	transcript_fn = "new_file_test"
 
-	t.transcribe(test_path, test_file, test_path, "new_file_test.csv").transcribe_to_file()
+	for p in [input_path, output_path]:
+		h.file_path_create(p)
+  
+	t.transcribe(input_path, test_file, input_path, transcript_fn+".csv").transcribe_to_file()
 
-	# run_image_process(transcribed_file, file_path='', by_word=by_word)
+	cc.createCaptions(transcript_fn, input_path, image_path).process_images()
 
 	
 	

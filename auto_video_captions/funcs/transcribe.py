@@ -90,7 +90,7 @@ class transcribe:
 				else:
 					sub_phrase.append(None)
 					phrase_id.append(f"seg_{seg['id']}")
-     
+	 
 		out_dict['segment_id'] = text_id 
 		out_dict['full_text'] = full_text
 		out_dict['segment_time'] = seg_time
