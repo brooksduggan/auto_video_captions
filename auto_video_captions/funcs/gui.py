@@ -1,48 +1,68 @@
 import tkinter as tk
-from tkinter import filedialog
-from PIL import Image, ImageTk
+import pandas as pd
 
-def open_file():
-    file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif")])
-    if file_path:
-        print(file_path)
-        image = Image.open(file_path)
-        w, h = image.size
+def load_csv(file_path):
+    df = pd.read_csv(file_path)
+    return df
 
-        # Scale the image to fit the frame
-        image = image.resize((int(w*.3), int(h*.3)))
+def save_csv(df, file_path):
+    df.to_csv(file_path, index=False)
 
-        photo = ImageTk.PhotoImage(image)
+def create_table(df, frame):
+    for index, row in df.iterrows():
+        sub_phrase = tk.Entry(frame)
+        sub_phrase.insert(0, row['sub_phrase'])
+        sub_phrase.grid(row=index, column=0)
 
-        image_label.config(image=photo)
-        image_label.image = photo
+        start_frame_entry = tk.Entry(frame)
+        start_frame_entry.insert(0, row['word_frame_start'])
+        start_frame_entry.grid(row=index, column=1)
 
-# Create the main window
-root = tk.Tk()
-root.title("Image Viewer")
+        end_frame_entry = tk.Entry(frame)
+        end_frame_entry.insert(0, row['word_frame_end'])
+        end_frame_entry.grid(row=index, column=2)
 
-# Set the window to full screen
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-root.geometry(f"{screen_width}x{screen_height}")
+def save_changes(df, frame):
+    for index, row in df.iterrows():
+        sub_phrase = frame.grid_slaves(row=index, column=0)
+        start_frame_entry = frame.grid_slaves(row=index, column=1)
+        end_frame_entry = frame.grid_slaves(row=index, column=2)
 
-# Create a frame for parameter input
-parameter_frame = tk.Frame(root)
-parameter_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        df.at[index, 'sub_phrase'] = sub_phrase
+        df.at[index, 'start_frame'] = int(start_frame_entry.get())
+        df.at[index, 'end_frame'] = int(end_frame_entry.get())
 
-# Add parameter input widgets here (e.g., labels, entry fields, buttons)
-# ...
+    save_csv(df, 'updated_file.csv')  # Replace 'updated_file.csv' with your desired output file
 
-# Create a frame for image display
-image_frame = tk.Frame(root, bg="black")
-image_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+def main():
+    file_path = ""  # Replace with your actual file path
+    df = load_csv(file_path)
 
-# Create a label to display the image
-image_label = tk.Label(image_frame, bg="black")
-image_label.pack(fill=tk.BOTH, expand=True)
+    root = tk.Tk()
+    root.title("CSV Editor")
 
-# Create a button to open a file
-open_button = tk.Button(parameter_frame, text="Open Image", command=open_file)
-open_button.pack(pady=10)
+    frame = tk.Frame(root)
+    frame.pack(fill='both', expand=1)
 
-root.mainloop()
+    my_canvas = tk.Canvas(frame)
+    my_canvas.pack(side='left', fill='both', expand=1)
+
+    scrollbar = tk.Scrollbar(frame, orient='vertical', command=my_canvas.yview)
+    scrollbar.pack( side = "right", fill="y" )
+
+    my_canvas.configure(yscrollcommand=scrollbar.set)
+    my_canvas.bind('<Configure>', lambda e: my_canvas.configure(scrollregion=my_canvas.bbox('all')))
+
+    scnd_frame = tk.Frame(my_canvas)
+
+    my_canvas.create_window((0,0), window=scnd_frame, anchor='nw')
+
+    create_table(df, scnd_frame)
+
+    save_button = tk.Button(root, text="Save Changes", command=lambda: save_changes(df, scnd_frame))
+    save_button.pack()
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
