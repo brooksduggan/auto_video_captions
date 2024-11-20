@@ -3,12 +3,15 @@ import pronouncing as p
 import re
 import string
 import ast
+from config import *
 
 def convert_words_to_phoneme(input_df, phoneme_df):
 
 	final_dict = {}
 	id_list = []
+	word_unedit = []
 	word_list = []
+	text = []
 	phoneme_list = []
 	w_start_f_list = []
 	mouth_list = []
@@ -18,6 +21,7 @@ def convert_words_to_phoneme(input_df, phoneme_df):
 	for i in range(0, len(input_df.index)):
 		translator = str.maketrans('', '', """!"#$%&()*+,-./:;<=>?@[\]^_`{|}~""")
 		s = input_df.loc[i]
+  
 		if i < len(input_df.index)-1:
 			s_next = input_df.loc[i+1]
 		else:
@@ -31,8 +35,12 @@ def convert_words_to_phoneme(input_df, phoneme_df):
 			print(cur_word)
 		cur_phone_wo_emph = re.sub(r'\d+', '', cur_phone)
 
-		mouth_map_list = [1]
-		frame_map_list = [1]
+		if s['word_id'] == 0:
+			mouth_map_list = [1]
+			frame_map_list = [1]
+		else:
+			mouth_map_list = []
+			frame_map_list = []
 
 		for l in cur_phone_wo_emph.split():
 			p_dict = phoneme_df[phoneme_df['phoneme'] == l]
@@ -42,21 +50,23 @@ def convert_words_to_phoneme(input_df, phoneme_df):
 			frame_map_list.extend(ast.literal_eval(val['frame_length']))
 
 
-		if "..." in s['word_used'] or '!' in s['word_used']:
+		if "..." in s['word_used'] or '!' in s['word_used'] or s_next['word_id'] == 0:
 			final_w_map = mouth_map_list + [2, 1]
 			final_f_map = frame_map_list + [1, 1]
 		else:
-			final_w_map = mouth_map_list + [1]
-			final_f_map = frame_map_list + [1]
+			final_w_map = mouth_map_list
+			final_f_map = frame_map_list
 
-		if s_next is not None:
-			if s_next['word_id'] == 0:
-				input_df.loc[i+1, 'word_frame_start'] = s_next['word_frame_start']
-			else:
-				input_df.loc[i+1, 'word_frame_start'] = s['word_frame_start']+sum(final_f_map)-1
+		# if s_next is not None:
+		# 	if s_next['word_id'] == 0:
+		# 		input_df.loc[i+1, 'word_frame_start'] = s_next['word_frame_start']
+		# 	else:
+		# 		input_df.loc[i+1, 'word_frame_start'] = s['word_frame_start']+sum(final_f_map)-1
 
 		id_list.append(i)
+		word_unedit.append(s['word_used'].replace(" ", ""))
 		word_list.append(cur_word)
+		text.append(s['full_text'])
 		phoneme_list.append(cur_phone_wo_emph)
 		w_start_f_list.append(s['word_frame_start'])
 		mouth_list.append(final_w_map)
@@ -66,6 +76,8 @@ def convert_words_to_phoneme(input_df, phoneme_df):
 
 
 	final_dict['id'] = id_list
+	# final_dict['full_text'] = text
+	# final_dict['word_used'] = word_unedit
 	final_dict['word'] = word_list
 	final_dict['phoneme'] = phoneme_list
 	final_dict['w_start_frame'] = w_start_f_list
@@ -79,13 +91,12 @@ def convert_words_to_phoneme(input_df, phoneme_df):
 	return final_df
 
 def main():
-    transcribed_file = "by_word.csv"
-    phoneme_map = "phonetic_mapping.csv"
 
-    input_df = pd.read_csv(transcribed_file)
-    phoneme_df = pd.read_csv(phoneme_map)
+    input_df = pd.read_csv(output_path + transcript_fn + ".csv")
+    phoneme_df = pd.read_csv(top_path + phoneme_map)
     final_df = convert_words_to_phoneme(input_df, phoneme_df)
-    final_df.to_csv('test_phoneme.csv', index=False)
+    test_final = pd.merge(input_df, final_df, left_index=True, right_index=True, how='left')
+    test_final.to_csv(output_path + 'final_phenome_mapping.csv', index=False)
     
 if __name__ == "__main__":
     main() 
