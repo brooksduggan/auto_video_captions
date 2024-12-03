@@ -22,16 +22,17 @@ class transcribe:
 	def transcribe_to_file(self):
 		self.transcribe_audio()
 		self.organize_text()
+		self.audit_df()
 		self.create_csv()
 		
 
 	def transcribe_audio(self):
-		# model = wt.load_model("turbo")
-		# self.transcription = wt.transcribe(model, self.audio_path+self.audio_name, language='English')
+		model = wt.load_model("turbo")
+		self.transcription = wt.transcribe(model, self.audio_path+self.audio_name, language='English')
 		log.info("Retrieving text from audio...")
-		with open(self.output_path+"testoutput.json", "r") as file:
-			# Write the string to the file
-			self.transcription = json.load(file)
+		# with open(self.output_path+"testoutput.json", "r") as file:
+		# 	# Write the string to the file
+		# 	self.transcription = json.load(file)
 
 		return None
 
@@ -58,7 +59,7 @@ class transcribe:
 				# Segment specific calculations
 				s_time = seg['end'] - seg['start']
 				s_frames = math.ceil(s_time * self.frame_rate)
-				w_count = len(seg['text'].replace(',','').split(' '))
+				w_count = len(seg['text'].lstrip().replace(',','').split(' '))
 				seg_frame_start = math.floor(seg['start'] * self.frame_rate)
 				seg_frame_end = math.ceil(seg['end'] * self.frame_rate)
 
@@ -108,9 +109,18 @@ class transcribe:
 		out_dict['word_frame_end'] = word_frame_end
 		self.org_dict = out_dict
 
-		return out_dict
+		self.df = pd.DataFrame(self.org_dict)
+
+	def audit_df(self):
+		for i in range(0, len(self.df.index)):
+			if i > 0:
+				s_prev = self.df.loc[i-1]
+			else:
+				s_prev = None
+			if s_prev is not None and self.df.loc[i, 'word_frame_start'] < s_prev['word_frame_end']:
+					self.df.loc[i, 'word_frame_start'] = s_prev['word_frame_end']
+			
 
 	def create_csv(self):
 			log.info("Creating CSV output...")
-			df = pd.DataFrame(self.org_dict)
-			df.to_csv(self.output_path+self.output_name, index=False)
+			self.df.to_csv(self.output_path+self.output_name, index=False)

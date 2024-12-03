@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
-from config import font_path, font_size, asp_ratio, default_color, highlight_color, word_threshold, highlight, sw
+from funcs.config import font_path, font_size, asp_ratio, default_color, highlight_color, word_threshold, highlight, sw
 import textwrap
 import os
 
@@ -59,12 +59,12 @@ class createCaptions:
 	def _create_by_word_text_images_grow(self, text_obj, w_list):
 		"""Creates a text image with a transparent background."""
 
-		if text_obj['words_in_phrase'] > word_threshold:
+		if text_obj['word_count'] > word_threshold:
 			text = text_obj['sub_phrase']
 			n_w_inphrase = len(text_obj['sub_phrase'].lstrip().split())
 		else:
 			text = text_obj['associated_phrase']
-			n_w_inphrase = text_obj['words_in_phrase']
+			n_w_inphrase = text_obj['word_count']
 
 		font = ImageFont.truetype(font_path, font_size)
 		highlightfont = ImageFont.truetype(font_path, highlight)

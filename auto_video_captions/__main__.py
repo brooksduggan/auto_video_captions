@@ -1,20 +1,21 @@
 from funcs import transcribe as t
 from funcs import helpers as h
 from funcs import caption_create as cc
+from funcs.config import *
 
 def main():
-	input_path = "C:/Users/btdug/OneDrive/Documents/Python Scripts/"
-	output_path = "C:/Users/btdug/OneDrive/Documents/Python Scripts/test_output/"
-	image_path = output_path + "caption_imgs/"
-	test_file = "inaworld_pure.mp3"
-	transcript_fn = "new_file_test"
 
-	for p in [input_path, output_path]:
+	for p in [input_path, output_path, image_path]:
 		h.file_path_create(p)
   
-	t.transcribe(input_path, test_file, input_path, transcript_fn+".csv").transcribe_to_file()
+	# t.transcribe(input_path, audio_file, output_path, transcript_fn+".csv").transcribe_to_file()
 
-	cc.createCaptions(transcript_fn, input_path, image_path).process_images()
+	while True:
+		if input('Is the transcription correct? (Y/N)') == 'N':
+			continue
+		else:
+			cc.createCaptions(transcript_fn, output_path, image_path).process_images()
+			break
 
 	
 	
