@@ -8,9 +8,9 @@ def main():
 	for p in [input_path, output_path, image_path]:
 		h.file_path_create(p)
   
-	# t.transcribe(input_path, audio_file, output_path, transcript_fn+".csv").transcribe_to_file()
 
 	while True:
+		t.transcribe(input_path, audio_file, output_path, transcript_fn+".csv").transcribe_to_file()
 		if input('Is the transcription correct? (Y/N)') == 'N':
 			continue
 		else:

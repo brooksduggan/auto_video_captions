@@ -63,7 +63,7 @@ class createCaptions:
 			text = text_obj['sub_phrase']
 			n_w_inphrase = len(text_obj['sub_phrase'].lstrip().split())
 		else:
-			text = text_obj['associated_phrase']
+			text = text_obj['full_text'].upper()
 			n_w_inphrase = text_obj['word_count']
 
 		font = ImageFont.truetype(font_path, font_size)
