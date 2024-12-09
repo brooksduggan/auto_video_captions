@@ -83,32 +83,6 @@ class mainGUIs:
         len_path = len(video_path[0])
         self.vid_entry.config(state='readonly', readonlybackground='grey50', width=len_path)
 
-    def display_text(self, p):
-        display = ''
-        lines_iterator = iter(p.stdout.readline, b"")
-        for line in lines_iterator:
-            if 'Active' in line:
-                self.text.delete('1.0', 'END')
-                self.text.insert('INSERT', display)
-                display = ''
-                display = display + line
-
-
-    def display_text2(self, p):
-        while p.poll() is None:
-            line = p.stdout.readline()
-            if line != '':
-                if 'Active' in line:
-                    self.text.delete('1.0', END)
-                    self.text.insert(END, line)
-                    p.stdout.flush()
-
-
-    def execute(self):
-        p = Popen(PROCESS, universal_newlines=True, stdout=PIPE, stderr=PIPE)
-        print('process created with pid: {}'.format(p.pid))
-        self.display_text(p)
-
     def _transcribe_video(self, root):
         proj_name = self.proj_name.get().lower()
         output_path = self.proj_entry.get()
@@ -116,11 +90,12 @@ class mainGUIs:
 
         self.project_path = output_path+"/"+proj_name+"/"
         self.project_name = h.remove_spaces_and_punctuation(proj_name)
+        self.vid_path = input_path
 
         for p in [self.project_path, self.project_path+'/caption_imgs']:
             h.file_path_create(p)
 
-        h.get_audio_from_video(input_path, output_path, output_name=proj_name)
+        h.get_audio_from_video(self.vid_path, output_path, output_name=proj_name)
         t.transcribe(self.project_path, f"{self.project_name}_audio.mp3", self.project_path, f"{self.project_name}_transcribed.csv").transcribe_to_file()
         root.destroy()
 

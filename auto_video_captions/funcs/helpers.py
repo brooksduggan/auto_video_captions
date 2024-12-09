@@ -21,7 +21,7 @@ def get_audio_from_video(input_path, output_path, output_name):
 	audio_clip = video_clip.audio
 
 	# Write the audio to a separate file
-	audio_clip.write_audiofile(output_path+"/"+output_name+f"/{output_name}_audio.mp3")
+	audio_clip.write_audiofile(output_path+f"/{output_name}_audio.mp3")
 
 	# Close the video and audio clips
 	audio_clip.close()
