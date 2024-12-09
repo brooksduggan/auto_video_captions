@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 import pandas as pd
 from config import *
+import transcribe as t
+import helpers as h
 
 
 class mainGUIs:
@@ -81,6 +83,47 @@ class mainGUIs:
         len_path = len(video_path[0])
         self.vid_entry.config(state='readonly', readonlybackground='grey50', width=len_path)
 
+    def display_text(self, p):
+        display = ''
+        lines_iterator = iter(p.stdout.readline, b"")
+        for line in lines_iterator:
+            if 'Active' in line:
+                self.text.delete('1.0', 'END')
+                self.text.insert('INSERT', display)
+                display = ''
+                display = display + line
+
+
+    def display_text2(self, p):
+        while p.poll() is None:
+            line = p.stdout.readline()
+            if line != '':
+                if 'Active' in line:
+                    self.text.delete('1.0', END)
+                    self.text.insert(END, line)
+                    p.stdout.flush()
+
+
+    def execute(self):
+        p = Popen(PROCESS, universal_newlines=True, stdout=PIPE, stderr=PIPE)
+        print('process created with pid: {}'.format(p.pid))
+        self.display_text(p)
+
+    def _transcribe_video(self, root):
+        proj_name = self.proj_name.get().lower()
+        output_path = self.proj_entry.get()
+        input_path = self.vid_entry.get()
+
+        self.project_path = output_path+"/"+proj_name+"/"
+        self.project_name = h.remove_spaces_and_punctuation(proj_name)
+
+        for p in [self.project_path, self.project_path+'/caption_imgs']:
+            h.file_path_create(p)
+
+        h.get_audio_from_video(input_path, output_path, output_name=proj_name)
+        t.transcribe(self.project_path, f"{self.project_name}_audio.mp3", self.project_path, f"{self.project_name}_transcribed.csv").transcribe_to_file()
+        root.destroy()
+
     def video_loader_gui(self):
 
         root = tk.Tk()
@@ -113,8 +156,8 @@ class mainGUIs:
 
         proj_name_title = tk.Label(scnd_frame, text='Project Name:', font=("Arial", 12, "bold"), bg='SlateGray4')
         proj_name_title.grid(row=0, column=0)
-        proj_name = tk.Entry(scnd_frame, width=50, bg='azure')
-        proj_name.grid(row=0, column=1)
+        self.proj_name = tk.Entry(scnd_frame, width=50, bg='azure')
+        self.proj_name.grid(row=0, column=1)
 
         proj_path_title = tk.Label(scnd_frame, text='Project Path:', font=("Arial", 12, "bold"), bg='SlateGray4')
         proj_path_title.grid(row=1, column=0)
@@ -130,7 +173,7 @@ class mainGUIs:
         video_path = tk.Button(scnd_frame, text="Choose Video",width=10, height=2, bg="grey", fg="white", command=lambda: self._get_vid_path())
         video_path.grid(row=2, column=2, padx=20, pady=3)
 
-        run_button = tk.Button(root, text="Transcribe",width=10, height=2, bg="forest green", fg="white", command=lambda: transcribe_video(root, ))
+        run_button = tk.Button(root, text="Transcribe",width=10, height=2, bg="forest green", fg="white", command=lambda: self._transcribe_video(root))
         run_button.pack(side='right',padx=20, pady=3)
 
         width= root.winfo_screenwidth() 
@@ -143,8 +186,7 @@ class mainGUIs:
         root.mainloop()
 
     def transcription_editor_gui(self):
-        file_path = test_csv  # Replace with your actual file path
-        df = self._load_csv(file_path)
+        df = self._load_csv(self.project_path+f"{self.project_name}_transcribed.csv")
 
         root = tk.Tk()
         root.title("CSV Editor")
@@ -193,4 +235,4 @@ class mainGUIs:
 if __name__ == "__main__":
     m = mainGUIs()
     m.video_loader_gui()
-    # transcription_editor_gui()
+    m.transcription_editor_gui()
