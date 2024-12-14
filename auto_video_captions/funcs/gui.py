@@ -17,7 +17,7 @@ class mainGUIs:
         root.destroy()
 
     def _create_table(self, df, frame):
-        df = df[['full_text', 'segment_id']].drop_duplicates()
+        df = df[['full_text', 'segment_id']].drop_duplicates().reset_index()
         max_length = df['full_text'].str.len().max()
         segment_id = tk.Label(frame, text='ID', font=("Arial", 16, "bold"), bg='SlateGray4')
         segment_id.grid(row=0, column=0, sticky='w')
@@ -48,16 +48,16 @@ class mainGUIs:
 
 
     def _save_changes(self, root, df, frame):
-        update_df = df[['full_text', 'segment_id']].drop_duplicates()
+        update_df = df[['full_text', 'segment_id']].drop_duplicates().reset_index()
         for index, row in update_df.iterrows():
-            segment_id = frame.grid_slaves(row=index, column=0)
-            full_text = frame.grid_slaves(row=index, column=1)
-
-            df.loc[df['segment_id'] == segment_id[0].get(), 'full_text'] = full_text[0].get()
+            final_text = frame.grid_slaves(row=index, column=1)
+            print(index, final_text)
+            if index > 0:
+                df.loc[df['segment_id'] == index, 'full_text'] = final_text[0].get()
 
         final_df = self._update_check(df)
 
-        self._save_csv(root=root, df=final_df, file_path=new_output)  # Replace 'updated_file.csv' with your desired output file
+        self._save_csv(root=root, df=final_df, file_path=self.project_path+f"{self.project_name}_transcribed.csv")  # Replace 'updated_file.csv' with your desired output file
 
     def _get_proj_path(self):
         folder_path = filedialog.askdirectory()
@@ -96,7 +96,7 @@ class mainGUIs:
             h.file_path_create(p)
 
         h.get_audio_from_video(self.vid_path, output_path, output_name=proj_name)
-        t.transcribe(self.project_path, f"{self.project_name}_audio.mp3", self.project_path, f"{self.project_name}_transcribed.csv").transcribe_to_file()
+        # t.transcribe(self.project_path, f"{self.project_name}_audio.mp3", self.project_path, f"{self.project_name}_transcribed.csv").transcribe_to_file()
         root.destroy()
 
     def video_loader_gui(self):
