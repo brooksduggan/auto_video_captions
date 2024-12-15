@@ -34,30 +34,46 @@ class mainGUIs:
             full_text.grid(row=index+1, column=1)
 
     def _update_check(self, df):
+        update_df = self.trans_df
+        for i, row in df.iterrows():
+            word_list = row['full_text'].lstrip().upper().split()
+            cur_list = update_df.loc[update_df['segment_id'] == "seg_" + str(i)]['full_text'].values[0].lstrip().upper().split()
+            
+            for w, word in enumerate(word_list):
+                seg_num = w//word_threshold
+                start = seg_num*word_threshold
+                end = ((seg_num)+1)*word_threshold
+                new_sub = ' '.join(word_list[start:end])
+                cur_sub = update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'].values[0]
+                cur_word = update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'].values[0]
+                if len(cur_list) != len(word_list):
 
-        for i, r in df.iterrows():
-            start = r['word_id']//word_threshold*word_threshold
-            end = ((r['word_id']//word_threshold)+1)*word_threshold
-            word_list = r['full_text'].lstrip().upper().split()
-            new_sub = ' '.join(word_list[start:end])
-            if r['sub_phrase'] != new_sub:
-                df.loc[df['sub_phrase'] == r['sub_phrase'], 'sub_phrase'] = new_sub
-                df.loc[(df['word_id'] == r['word_id']) & (df['phrase_id'] == r['phrase_id']), 'word_used'] = word_list[r['word_id']]
+                    if len(cur_list) > len(word_list) and cur_word != word:
+                        diff = len(word_list)-len(cur_list)
+                        for x in range(len(word_list)-diff, len(word_list)):
+                            update_df.drop(update_df[(update_df['word_id'] == x) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num))].index, inplace=True)
+                        update_df.loc[update_df['segment_id'] == "seg_"+str(i), 'full_text'] = row['full_text']
+                        update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'] = new_sub
+                        update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'] = word
 
-        return df
+                else:
+                    if cur_sub != new_sub:
+                        update_df.loc[update_df['segment_id'] == "seg_"+str(i), 'full_text'] = row['full_text']
+                        update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'] = new_sub
+                        update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'] = word
+        
+        return update_df
 
 
     def _save_changes(self, root, df, frame):
         update_df = df[['full_text', 'segment_id']].drop_duplicates().reset_index()
-        for index, row in update_df.iterrows():
-            final_text = frame.grid_slaves(row=index, column=1)
-            print(index, final_text)
-            if index > 0:
-                df.loc[df['segment_id'] == index, 'full_text'] = final_text[0].get()
+        for index in range(0, len(update_df.index)):
+            final_text = frame.grid_slaves(row=index+1, column=1)
+            update_df.loc[update_df['segment_id'] == "seg_" + str(index), 'full_text'] = final_text[0].get()
 
-        final_df = self._update_check(df)
+        final_df = self._update_check(update_df)
 
-        self._save_csv(root=root, df=final_df, file_path=self.project_path+f"{self.project_name}_transcribed.csv")  # Replace 'updated_file.csv' with your desired output file
+        self._save_csv(root=root, df=final_df, file_path=self.project_path+f"{self.project_name}_transcribed_TEST.csv")
 
     def _get_proj_path(self):
         folder_path = filedialog.askdirectory()
@@ -161,7 +177,7 @@ class mainGUIs:
         root.mainloop()
 
     def transcription_editor_gui(self):
-        df = self._load_csv(self.project_path+f"{self.project_name}_transcribed.csv")
+        self.trans_df = self._load_csv(self.project_path+f"{self.project_name}_transcribed.csv")
 
         root = tk.Tk()
         root.title("CSV Editor")
@@ -191,9 +207,9 @@ class mainGUIs:
 
         my_canvas.create_window((0,0), window=scnd_frame, anchor='nw')
 
-        self._create_table(df, scnd_frame)
+        self._create_table(self.trans_df, scnd_frame)
 
-        save_button = tk.Button(root, text="Save Changes",width=10, height=2, bg="forest green", fg="white", command=lambda: self._save_changes(root, df, scnd_frame))
+        save_button = tk.Button(root, text="Save Changes",width=10, height=2, bg="forest green", fg="white", command=lambda: self._save_changes(root, self.trans_df, scnd_frame))
         save_button.pack(side='right',padx=20, pady=3)
         no_change_button = tk.Button(root, text="No Changes",width=10, height=2, bg="LightBlue3", fg="gray25", command=lambda: root.destroy())
         no_change_button.pack(side='right', padx=20, pady=3)
