@@ -89,8 +89,8 @@ class transcribe:
 					sub_phrase.append(' '.join(part[splt]).upper())
 					phrase_id.append(f"seg_{seg['id']}_{splt}")
 				else:
-					sub_phrase.append(w['text'].upper())
-					phrase_id.append(f"seg_{seg['id']}")
+					sub_phrase.append(seg['text'].lstrip().upper())
+					phrase_id.append(f"seg_{seg['id']}_0")
 	 
 		out_dict['segment_id'] = text_id 
 		out_dict['full_text'] = full_text

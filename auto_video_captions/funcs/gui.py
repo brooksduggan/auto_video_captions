@@ -37,7 +37,6 @@ class mainGUIs:
         update_df = self.trans_df
         for i, row in df.iterrows():
             word_list = row['full_text'].lstrip().upper().split()
-            cur_list = update_df.loc[update_df['segment_id'] == "seg_" + str(i)]['full_text'].values[0].lstrip().upper().split()
             
             for w, word in enumerate(word_list):
                 seg_num = w//word_threshold
@@ -46,21 +45,9 @@ class mainGUIs:
                 new_sub = ' '.join(word_list[start:end])
                 cur_sub = update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'].values[0]
                 cur_word = update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'].values[0]
-                if len(cur_list) != len(word_list):
-
-                    if len(cur_list) > len(word_list) and cur_word != word:
-                        diff = len(word_list)-len(cur_list)
-                        for x in range(len(word_list)-diff, len(word_list)):
-                            update_df.drop(update_df[(update_df['word_id'] == x) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num))].index, inplace=True)
-                        update_df.loc[update_df['segment_id'] == "seg_"+str(i), 'full_text'] = row['full_text']
-                        update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'] = new_sub
-                        update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'] = word
-
-                else:
-                    if cur_sub != new_sub:
-                        update_df.loc[update_df['segment_id'] == "seg_"+str(i), 'full_text'] = row['full_text']
-                        update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'] = new_sub
-                        update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'] = word
+                update_df.loc[update_df['segment_id'] == "seg_"+str(i), 'full_text'] = row['full_text']
+                update_df.loc[update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num), 'sub_phrase'] = new_sub
+                update_df.loc[(update_df['word_id'] == w) & (update_df['phrase_id'] == "seg_"+str(i)+"_"+str(seg_num)), 'word_used'] = word
         
         return update_df
 
@@ -111,8 +98,8 @@ class mainGUIs:
         for p in [self.project_path, self.project_path+'/caption_imgs']:
             h.file_path_create(p)
 
-        h.get_audio_from_video(self.vid_path, output_path, output_name=proj_name)
-        # t.transcribe(self.project_path, f"{self.project_name}_audio.mp3", self.project_path, f"{self.project_name}_transcribed.csv").transcribe_to_file()
+        h.get_audio_from_video(self.vid_path, self.project_path, output_name=self.project_name)
+        t.transcribe(self.project_path, f"{self.project_name}.mp3", self.project_path, f"{self.project_name}_transcribed.csv").transcribe_to_file()
         root.destroy()
 
     def video_loader_gui(self):
